@@ -22,3 +22,9 @@ def record_audio():
     sd.wait()
     wav.write("input.wav",SAMPLE_RATE,audio)
     return "input.wav"
+def transcribe(audio_path):
+    segments, _ = whisper.transcribe(audio_path)
+    text=""
+    for j in segments:
+        text+=j.text
+    return text.strip()
