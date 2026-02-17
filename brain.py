@@ -18,12 +18,24 @@ def chat():
             print("Jarvis Goodbye.")
             break
         message.append({"role":"user","content":user_input})
-        response=ollama.chat(
+        # response=ollama.chat(
+        #     model = "llama3:8b-instruct-q4_K_M",
+        #     messages=message
+        # )
+        stream=ollama.chat(
             model = "llama3:8b-instruct-q4_K_M",
-            messages=message
+            messages=message,
+            stream=True
         )
-        reply=response["message"]["content"]
-        message.append({"role":"assistant","content":reply})
-        print(f"[cyan]Jarvis:[/cyan] {reply}")
+        full_reply=""
+        for chunk in stream:
+            token = chunk['message']['content'] 
+            print(token, end="", flush=True)
+            full_reply += token
+        message.append({"role":"assistant","contents":full_reply})
+        print()
+        # reply=response["message"]["content"]
+        # message.append({"role":"assistant","content":reply})
+        # print(f"[cyan]Jarvis:[/cyan] {reply}")
 if __name__=="__main__":
     chat()
