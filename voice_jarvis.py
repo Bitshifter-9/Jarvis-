@@ -44,3 +44,18 @@ def speak(text):
     ],input=text.encode())
     subprocess.run(["afplay","output.wav"])
 
+print("\n Jarvis voice Assistant Read,press ctrl+c to stop")
+
+try:
+    while True:
+        audio_file=record_audio()
+        user_text=transcribe(audio_file)
+        if not user_text:
+            continue
+        print(f"\nYou said: {user_text}")
+        reply=jarvis(user_text)
+        print(f"Jarvis: {reply}")
+        speak(reply)
+except KeyboardInterrupt:
+    print("\nJarvis stopped.")
+
