@@ -28,3 +28,14 @@ def transcribe(audio_path):
     for j in segments:
         text+=j.text
     return text.strip()
+
+def jarvis(text):
+    messages.append({"role":"user","content":text})
+    response=ollama.chat(
+        model=MODEL_NAME,
+        messages=messages
+    )
+    reply= response["message"]["content"]
+    messages.append({"role":"assistant","content":reply})
+    return reply
+
