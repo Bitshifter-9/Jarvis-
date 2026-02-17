@@ -3,6 +3,7 @@ import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wav
 import subprocess
+import os
 from faster_whisper import WhisperModel
 
 MODEL_NAME = "llama3:latest"
@@ -30,19 +31,50 @@ def transcribe(audio_path):
     return text.strip()
 
 def jarvis(text):
+
     messages.append({"role":"user","content":text})
-    response=ollama.chat(
+
+    stream=ollama.chat(
         model=MODEL_NAME,
-        messages=messages
+        messages=messages,
+        stream=True
     )
-    reply= response["message"]["content"]
+    reply=""
+    buffer=""
+    for chunk in stream:
+        token = chunk["message"]["content"]
+        print(token, end="", flush=True)
+        reply+=token
+        buffer+=token
+        if token in [".", "!", "?", "\n"]:
+            speak(buffer.strip())
+            buffer = ""
+    if buffer.strip():
+        speak(buffer.strip())
+
+
+    # response=ollama.chat(
+    #     model=MODEL_NAME,
+    #     messages=messages
+    # )
+    # reply= response["message"]["content"]
     messages.append({"role":"assistant","content":reply})
-    return reply
+    # return reply
 def speak(text):
-    subprocess.run([
-        "piper","--model",VOICE_MODEL,"--output_file","output.wav"
-    ],input=text.encode())
-    subprocess.run(["afplay","output.wav"])
+    try:
+        subprocess.run([
+            "python", "-m", "piper",
+            "--model", VOICE_MODEL,
+            "--output-file", "output.wav"
+        ], input=text.encode(), check=True)
+
+        if os.path.exists("output.wav"):
+            subprocess.run(["afplay", "output.wav"])
+        else:
+            print("⚠️ Piper did not generate audio")
+
+    except Exception as e:
+        print("TTS Error:", e)
 
 print("\n Jarvis voice Assistant Read,press ctrl+c to stop")
 
@@ -53,9 +85,8 @@ try:
         if not user_text:
             continue
         print(f"\nYou said: {user_text}")
-        reply=jarvis(user_text)
-        print(f"Jarvis: {reply}")
-        speak(reply)
+        jarvis(user_text)
+       
 except KeyboardInterrupt:
     print("\nJarvis stopped.")
 
