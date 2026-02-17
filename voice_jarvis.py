@@ -5,6 +5,8 @@ import scipy.io.wavfile as wav
 import subprocess
 import os
 from faster_whisper import WhisperModel
+from memory import store_memory, recall_memory
+
 
 MODEL_NAME = "llama3:latest"
 VOICE_MODEL = "voices/en_US-lessac-medium.onnx"
@@ -31,6 +33,10 @@ def transcribe(audio_path):
     return text.strip()
 
 def jarvis(text):
+    memories=recall_memory(text)
+    memory_context=""
+    if memories:
+        memory_context = "\nRelevant past memory:\n" + "\n".join(memories)
 
     messages.append({"role":"user","content":text})
 
@@ -59,6 +65,9 @@ def jarvis(text):
     # )
     # reply= response["message"]["content"]
     messages.append({"role":"assistant","content":reply})
+    store_memory("User: " + text)
+    store_memory("Jarvis: " + reply)
+
     # return reply
 def speak(text):
     try:
