@@ -38,4 +38,9 @@ def jarvis(text):
     reply= response["message"]["content"]
     messages.append({"role":"assistant","content":reply})
     return reply
+def speak(text):
+    subprocess.run([
+        "piper","--model",VOICE_MODEL,"--output_file","output.wav"
+    ],input=text.encode())
+    subprocess.run(["afplay","output.wav"])
 
