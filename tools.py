@@ -9,7 +9,8 @@ def open_app(app_name):
         "chrome": "open -a 'Google Chrome'",
         "safari": "open -a Safari",
         "vscode": "open -a 'Visual Studio Code'",
-        "terminal": "open -a Terminal"
+        "terminal": "open -a Terminal",
+        "youtube": "open https://www.youtube.com"
     }
 
     cmd = apps.get(app_name.lower())

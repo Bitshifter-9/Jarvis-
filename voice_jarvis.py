@@ -82,6 +82,9 @@ def try_tools(user_text):
     
     if "open terminal" in text or "terminal" in text:
         return open_app("terminal")
+    
+    if "open youtube" in text or "youtube" in text:
+        return open_app("youtube")
 
     if "time" in text:
         return get_time()
@@ -152,9 +155,6 @@ def speak(text):
 
         if os.path.exists("output.wav"):
             subprocess.run(["afplay", "output.wav"])
-        else:
-            print("Piper did not generate audio")
-
     except Exception as e:
         print("TTS Error:", e)
 
