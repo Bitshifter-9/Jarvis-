@@ -1,22 +1,22 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
 
+client = chromadb.Client()
+collection = client.get_or_create_collection("jarvis_memory")
+
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-client=chromadb.Client()
-collection = client.get_or_create_collection(name="jarvis_memory")
 
 def store_memory(text):
-    embedding = embedder.encode(text).tolist()
+    emb = embedder.encode(text).tolist()
     collection.add(
-        embeddings=[embedding],
+        embeddings=[emb],
         documents=[text],
         ids=[str(hash(text))]
     )
+
+
 def recall_memory(query, k=3):
-    embedding = embedder.encode(query).tolist()
-    results = collection.query(
-        query_embeddings=[embedding],
-        n_results=k
-    )
-    return results["documents"][0] if results["documents"] else []
+    emb = embedder.encode(query).tolist()
+    res = collection.query(query_embeddings=[emb], n_results=k)
+    return res["documents"][0] if res["documents"] else []

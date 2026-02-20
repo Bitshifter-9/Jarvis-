@@ -8,6 +8,7 @@ from faster_whisper import WhisperModel
 from memory import store_memory, recall_memory
 from tools import open_app, get_time, search_google, run_command
 from agent import execute_tool
+from knowledge.rag import search_knowledge
 
 
 
@@ -17,8 +18,14 @@ VOICE_MODEL = "voices/en_US-lessac-medium.onnx"
 SAMPLE_RATE = 16000
 DURATION = 4 
 
-print("Loading Whisper Model")
-whisper = WhisperModel("base", compute_type="int8")
+whisper = None
+
+def _get_whisper():
+    global whisper
+    if whisper is None:
+        print("Loading Whisper Model")
+        whisper = WhisperModel("base", compute_type="int8")
+    return whisper
 
 SYSTEM_PROMPT = """
 You are Jarvis, a smart, calm, and helpful AI voice assistant.
@@ -52,7 +59,7 @@ def record_audio():
     wav.write("input.wav",SAMPLE_RATE,audio)
     return "input.wav"
 def transcribe(audio_path):
-    segments, _ = whisper.transcribe(audio_path)
+    segments, _ = _get_whisper().transcribe(audio_path)
     text=""
     for j in segments:
         text+=j.text
@@ -105,8 +112,17 @@ def jarvis(text):
     memory_context=""
     if memories:
         memory_context = "\nRelevant past memory:\n" + "\n".join(memories)
+    knowledge = search_knowledge(user_text)
 
-    messages.append({"role":"user","content":text})
+    knowledge_context = ""
+    if knowledge:
+        knowledge_context = "\nRelevant knowledge:\n" + knowledge
+    messages.append({
+    "role": "user",
+    "content": text + knowledge_context
+})
+
+    # messages.append({"role":"user","content":text})
 
     stream=ollama.chat(
         model=MODEL_NAME,
@@ -160,21 +176,22 @@ def speak(text):
 
 print("\n Jarvis voice Assistant Read,press ctrl+c to stop")
 
-try:
-    while True:
-        audio_file=record_audio()
-        user_text=transcribe(audio_file)
-        if not user_text:
-            continue
-        print(f"\nYou said: {user_text}")
-        tool_result = try_tools(user_text)
+if __name__ == "__main__":
+    try:
+        while True:
+            audio_file=record_audio()
+            user_text=transcribe(audio_file)
+            if not user_text:
+                continue
+            print(f"\nYou said: {user_text}")
+            tool_result = try_tools(user_text)
 
-        if tool_result:
-            print("Jarvis:", tool_result)
-            speak(tool_result)
-            continue
-        jarvis(user_text)
+            if tool_result:
+                print("Jarvis:", tool_result)
+                speak(tool_result)
+                continue
+            jarvis(user_text)
        
-except KeyboardInterrupt:
-    print("\nJarvis stopped.")
+    except KeyboardInterrupt:
+        print("\nJarvis stopped.")
 

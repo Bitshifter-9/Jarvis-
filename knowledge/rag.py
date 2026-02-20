@@ -1,22 +1,19 @@
 import os
-from pypdf import PdfReader
-from sentence_transformers import SentenceTransformer
 import chromadb
+from sentence_transformers import SentenceTransformer
+from pypdf import PdfReader
 
-# Embedding model
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Persistent DB
 client = chromadb.Client()
-collection = client.get_or_create_collection(name="jarvis_knowledge")
+collection = client.get_or_create_collection("jarvis_knowledge")
+embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def read_file(path):
     if path.endswith(".pdf"):
         text = ""
         reader = PdfReader(path)
-        for page in reader.pages:
-            text += page.extract_text() or ""
+        for p in reader.pages:
+            text += p.extract_text() or ""
         return text
 
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
@@ -24,32 +21,17 @@ def read_file(path):
 
 
 def index_knowledge(folder="knowledge"):
-    for file in os.listdir(folder):
-        path = os.path.join(folder, file)
+    for f in os.listdir(folder):
+        path = os.path.join(folder, f)
         text = read_file(path)
-
         if not text.strip():
             continue
 
-        embedding = embedder.encode(text).tolist()
-
-        collection.add(
-            embeddings=[embedding],
-            documents=[text],
-            ids=[file]
-        )
-
-    print("Knowledge indexed.")
+        emb = embedder.encode(text).tolist()
+        collection.add(embeddings=[emb], documents=[text], ids=[f])
 
 
-def search_knowledge(query, k=2):
-    embedding = embedder.encode(query).tolist()
-
-    results = collection.query(
-        query_embeddings=[embedding],
-        n_results=k
-    )
-
-    if results["documents"]:
-        return "\n".join(results["documents"][0])
-    return ""
+def search_knowledge(q, k=2):
+    emb = embedder.encode(q).tolist()
+    res = collection.query(query_embeddings=[emb], n_results=k)
+    return "\n".join(res["documents"][0]) if res["documents"] else ""
