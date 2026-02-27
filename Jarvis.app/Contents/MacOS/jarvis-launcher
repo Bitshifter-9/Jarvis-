@@ -1,0 +1,18 @@
+#!/bin/bash
+# J.A.R.V.I.S — macOS App Launcher
+# Activates the Python venv and runs app.py
+
+DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+PROJECT_DIR="$(dirname "$(dirname "$(dirname "$DIR")")")"
+
+# The app bundle lives inside the Jarvis project folder
+# So we go up from Contents/MacOS/ to get to the project root
+APP_DIR="$(cd "$(dirname "$0")/../../../" && pwd)"
+
+cd "$APP_DIR"
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Run Jarvis
+exec python app.py
